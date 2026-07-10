@@ -1,0 +1,58 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sentinel-core",
+    "crates/sentinel-utils",
+    "crates/sentinel-config",
+    "crates/sentinel-parser",
+    "crates/sentinel-rules",
+    "crates/sentinel-report",
+    "crates/sentinel-ai",
+    "crates/sentinel-cli",
+]
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+thiserror = "2.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+indexmap = "2.7"
+syn = { version = "2.0", features = ["full", "parsing", "visit", "extra-traits"] }
+proc-macro2 = { version = "1.0", features = ["span-locations"] }
+quote = "1.0"
+walkdir = "2.5"
+glob = "0.3"
+clap = { version = "4.5", features = ["derive"] }
+soroban-sdk = "22.0.0"
+
+[workspace.dependencies.sentinel-core]
+path = "crates/sentinel-core"
+
+[workspace.dependencies.sentinel-utils]
+path = "crates/sentinel-utils"
+
+[workspace.dependencies.sentinel-config]
+path = "crates/sentinel-config"
+
+[workspace.dependencies.sentinel-parser]
+path = "crates/sentinel-parser"
+
+[workspace.dependencies.sentinel-rules]
+path = "crates/sentinel-rules"
+
+[workspace.dependencies.sentinel-report]
+path = "crates/sentinel-report"
+
+[workspace.dependencies.sentinel-ai]
+path = "crates/sentinel-ai"
+
+[workspace.dependencies.sentinel-cli]
+path = "crates/sentinel-cli"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

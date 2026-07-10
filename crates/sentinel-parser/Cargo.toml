@@ -1,0 +1,17 @@
+[package]
+name = "sentinel-parser"
+version = "0.1.0"
+edition = "2021"
+description = "Soroban contract parser producing a curated AST"
+
+[dependencies]
+sentinel-core.workspace = true
+sentinel-utils.workspace = true
+syn.workspace = true
+proc-macro2.workspace = true
+quote.workspace = true
+toml.workspace = true
+walkdir.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+tracing.workspace = true

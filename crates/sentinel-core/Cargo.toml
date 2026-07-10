@@ -1,0 +1,13 @@
+[package]
+name = "sentinel-core"
+version = "0.1.0"
+edition = "2021"
+description = "Foundation types and traits for the Sentinel security scanner"
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+indexmap.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

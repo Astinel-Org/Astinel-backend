@@ -1,0 +1,8 @@
+[package]
+name = "sentinel-ai"
+version = "0.1.0"
+edition = "2021"
+description = "AI explanation layer for Sentinel findings (future)"
+
+[dependencies]
+sentinel-core.workspace = true

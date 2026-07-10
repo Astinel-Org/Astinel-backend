@@ -1,0 +1,20 @@
+[package]
+name = "sentinel-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI interface for the Sentinel security scanner"
+
+[dependencies]
+sentinel-core.workspace = true
+sentinel-parser.workspace = true
+sentinel-rules.workspace = true
+sentinel-utils.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+walkdir.workspace = true
+toml.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,9 @@
+[package]
+name = "sentinel-utils"
+version = "0.1.0"
+edition = "2021"
+description = "Shared utilities for the Sentinel workspace"
+
+[dependencies]
+tracing.workspace = true
+tracing-subscriber.workspace = true

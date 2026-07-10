@@ -1,0 +1,11 @@
+[package]
+name = "sentinel-report"
+version = "0.1.0"
+edition = "2021"
+description = "Report generation for Sentinel scan results"
+
+[dependencies]
+sentinel-core.workspace = true
+sentinel-utils.workspace = true
+serde.workspace = true
+serde_json.workspace = true

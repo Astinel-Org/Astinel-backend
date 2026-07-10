@@ -1,0 +1,11 @@
+[package]
+name = "sentinel-rules"
+version = "0.1.0"
+edition = "2021"
+description = "Security rule engine and built-in rules for Soroban contracts"
+
+[dependencies]
+sentinel-core.workspace = true
+sentinel-parser.workspace = true
+tracing.workspace = true
+glob.workspace = true
