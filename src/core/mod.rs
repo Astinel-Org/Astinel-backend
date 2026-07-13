@@ -1,0 +1,25 @@
+pub mod ast;
+pub mod category;
+pub mod error;
+pub mod finding;
+pub mod registry;
+pub mod rule;
+pub mod rule_config;
+pub mod rule_id;
+pub mod scan_result;
+pub mod score;
+pub mod severity;
+pub mod span;
+
+pub use ast::Ast;
+pub use category::Category;
+pub use error::CoreError;
+pub use finding::Finding;
+pub use registry::RuleRegistry;
+pub use rule::Rule;
+pub use rule_config::RuleConfig;
+pub use rule_id::RuleId;
+pub use scan_result::{ScanResult, ScanSummary};
+pub use score::SecurityScore;
+pub use severity::Severity;
+pub use span::DiagnosticSpan;

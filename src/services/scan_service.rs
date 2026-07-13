@@ -1,0 +1,70 @@
+use std::sync::Arc;
+use tracing::instrument;
+use uuid::Uuid;
+use crate::database::pool::DbPool;
+use crate::database::models::ScanJob;
+use crate::database::repositories::{ScanRepository, ScanRepositoryImpl, ProjectRepositoryImpl};
+use crate::jobs::queue::{JobQueue, QueuedJob};
+use crate::jobs::status::JobStatus;
+use crate::jobs::scan_job::ScanJobExecutor;
+
+pub struct ScanService {
+    pool: DbPool,
+    queue: JobQueue,
+    executor: Arc<ScanJobExecutor>,
+}
+
+impl ScanService {
+    pub fn new(pool: DbPool, queue: JobQueue, project_repo: ProjectRepositoryImpl) -> Self {
+        Self {
+            executor: Arc::new(ScanJobExecutor::new(pool.clone(), project_repo)),
+            pool,
+            queue,
+        }
+    }
+
+    pub fn executor(&self) -> Arc<ScanJobExecutor> {
+        self.executor.clone()
+    }
+
+    #[instrument(skip(self), fields(project_id = %project_id))]
+    pub async fn enqueue_scan(&self, project_id: Uuid, branch: String) -> Result<ScanJob, crate::api::errors::ApiError> {
+        let repo = ScanRepositoryImpl::new(self.pool.clone());
+
+        let job = ScanJob::new(
+            project_id,
+            branch.clone(),
+            String::new(),
+            "queued".to_string(),
+            "manual".to_string(),
+            serde_json::json!({}),
+            0,
+        );
+
+        let saved = repo.create_job(&job).await?;
+
+        let queued = QueuedJob {
+            id: saved.id,
+            project_id: saved.project_id,
+            branch: saved.branch.clone(),
+            status: JobStatus::Queued,
+            config: serde_json::json!({}),
+        };
+
+        self.queue.enqueue(queued).await
+            .map_err(|_| crate::api::errors::ApiError::Internal("Failed to enqueue scan".to_string()))?;
+
+        Ok(saved)
+    }
+
+    pub async fn execute_direct(&self, project_id: Uuid, branch: String) -> Result<(), String> {
+        let job = QueuedJob {
+            id: Uuid::new_v4(),
+            project_id,
+            branch,
+            status: JobStatus::Queued,
+            config: serde_json::json!({}),
+        };
+        self.executor.execute(job).await
+    }
+}

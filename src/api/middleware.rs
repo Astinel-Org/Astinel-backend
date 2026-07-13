@@ -1,0 +1,73 @@
+use axum::{
+    extract::{Request, State},
+    middleware::Next,
+    response::Response,
+};
+use std::sync::Arc;
+use crate::auth::{AuthContext, JwtService, rbac::Role};
+use crate::database::repositories::ApiKeyRepository;
+use crate::state::AppState;
+
+fn sha256_hex(input: &str) -> String {
+    use sha2::{Sha256, Digest};
+    let mut hasher = Sha256::new();
+    hasher.update(input.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+async fn authenticate_api_key(state: &AppState, key: &str) -> Option<AuthContext> {
+    let hash = sha256_hex(key);
+    let api_key = state.api_key_repository.find_by_hash(&hash).await.ok()??;
+
+    let role = Role::from_str("developer").unwrap_or(Role::Developer);
+    let context = AuthContext::new(
+        uuid::Uuid::nil(),
+        format!("api:{}", api_key.name),
+        role,
+        Some(api_key.organization_id),
+    );
+
+    let _ = state.api_key_repository.update_last_used(api_key.id).await;
+    Some(context)
+}
+
+pub async fn auth_middleware(
+    State(state): State<Arc<AppState>>,
+    mut request: Request,
+    next: Next,
+) -> Response {
+    let api_key_header = request
+        .headers()
+        .get("X-API-Key")
+        .and_then(|v| v.to_str().ok());
+
+    if let Some(key) = api_key_header {
+        if let Some(context) = authenticate_api_key(&state, key).await {
+            request.extensions_mut().insert(context);
+            return next.run(request).await;
+        }
+    }
+
+    let auth_header = request
+        .headers()
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "));
+
+    let context = match auth_header {
+        Some(token) => {
+            match state.jwt_service.validate_access_token(token) {
+                Ok(claims) => {
+                    let role = Role::from_str(&claims.role)
+                        .unwrap_or(Role::Viewer);
+                    AuthContext::new(claims.sub, claims.email, role, claims.org_id)
+                }
+                Err(_) => AuthContext::anonymous(),
+            }
+        }
+        None => AuthContext::anonymous(),
+    };
+
+    request.extensions_mut().insert(context);
+    next.run(request).await
+}

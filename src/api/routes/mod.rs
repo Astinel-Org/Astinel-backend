@@ -1,0 +1,8 @@
+pub mod auth;
+pub mod health;
+pub mod version;
+pub mod projects;
+pub mod scans;
+pub mod reports;
+pub mod findings;
+pub mod wallet;
