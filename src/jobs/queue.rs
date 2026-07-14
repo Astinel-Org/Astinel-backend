@@ -1,10 +1,8 @@
-use std::collections::VecDeque;
-use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc};
 use uuid::Uuid;
+use crate::cache::redis::RedisPool;
 use crate::jobs::status::JobStatus;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QueuedJob {
     pub id: Uuid,
     pub project_id: Uuid,
@@ -15,40 +13,49 @@ pub struct QueuedJob {
 
 #[derive(Clone)]
 pub struct JobQueue {
-    inner: Arc<Mutex<JobQueueInner>>,
-    notifier: mpsc::Sender<Uuid>,
-}
-
-struct JobQueueInner {
-    jobs: VecDeque<QueuedJob>,
+    redis: RedisPool,
+    queue_key: String,
 }
 
 impl JobQueue {
-    pub fn new() -> (Self, mpsc::Receiver<Uuid>) {
-        let (tx, rx) = mpsc::channel(256);
-        let queue = Self {
-            inner: Arc::new(Mutex::new(JobQueueInner {
-                jobs: VecDeque::new(),
-            })),
-            notifier: tx,
-        };
-        (queue, rx)
+    pub fn new(redis: RedisPool) -> Self {
+        Self {
+            redis,
+            queue_key: "queue:scans".to_string(),
+        }
     }
 
-    pub async fn enqueue(&self, job: QueuedJob) -> Result<(), ()> {
-        let mut inner = self.inner.lock().await;
-        inner.jobs.push_back(job);
-        let _ = self.notifier.try_send(Uuid::new_v4());
+    pub async fn enqueue(&self, job: QueuedJob) -> Result<(), String> {
+        let payload = serde_json::to_string(&job).map_err(|e| e.to_string())?;
+        let mut con = self.redis.con.clone();
+        redis::cmd("LPUSH")
+            .arg(&self.queue_key)
+            .arg(&payload)
+            .query_async::<()>(&mut con)
+            .await
+            .map_err(|e| e.to_string())?;
         Ok(())
     }
 
     pub async fn dequeue(&self) -> Option<QueuedJob> {
-        let mut inner = self.inner.lock().await;
-        inner.jobs.pop_front()
+        let mut con = self.redis.con.clone();
+        let result: Option<(String, String)> = redis::cmd("BRPOP")
+            .arg(&self.queue_key)
+            .arg(5)
+            .query_async(&mut con)
+            .await
+            .ok()?;
+        result
+            .and_then(|(_key, payload)| serde_json::from_str(&payload).ok())
     }
 
     pub async fn len(&self) -> usize {
-        self.inner.lock().await.jobs.len()
+        let mut con = self.redis.con.clone();
+        redis::cmd("LLEN")
+            .arg(&self.queue_key)
+            .query_async(&mut con)
+            .await
+            .unwrap_or(0)
     }
 
     pub async fn is_empty(&self) -> bool {

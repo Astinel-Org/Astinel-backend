@@ -1,4 +1,5 @@
 use crate::auth::{JwtService, NonceStore};
+use crate::cache::redis::{RedisPool, SessionStore, RateLimiter, WebhookDedup, ScanStatusCache};
 use crate::database::pool::DbPool;
 use crate::database::repositories::*;
 use crate::jobs::queue::JobQueue;
@@ -6,10 +7,15 @@ use crate::services::ScanService;
 
 pub struct AppState {
     pub pool: DbPool,
+    pub redis: RedisPool,
     pub jwt_service: JwtService,
     pub nonce_store: NonceStore,
     pub queue: JobQueue,
     pub scan_service: ScanService,
+    pub session_store: SessionStore,
+    pub rate_limiter: RateLimiter,
+    pub webhook_dedup: WebhookDedup,
+    pub scan_status_cache: ScanStatusCache,
     pub user_repository: UserRepositoryImpl,
     pub organization_repository: OrganizationRepositoryImpl,
     pub project_repository: ProjectRepositoryImpl,
@@ -20,15 +26,20 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(pool: DbPool) -> Self {
-        let (queue, _rx) = JobQueue::new();
+    pub async fn new(pool: DbPool, redis: RedisPool) -> Self {
+        let queue = JobQueue::new(redis.clone());
         let jwt_service = JwtService::from_env();
 
         Self {
             scan_service: ScanService::new(pool.clone(), queue.clone(), ProjectRepositoryImpl::new(pool.clone())),
             queue,
+            session_store: SessionStore::new(redis.clone()),
+            rate_limiter: RateLimiter::new(redis.clone()),
+            webhook_dedup: WebhookDedup::new(redis.clone()),
+            scan_status_cache: ScanStatusCache::new(redis.clone()),
             nonce_store: NonceStore::new(),
             jwt_service,
+            redis,
             user_repository: UserRepositoryImpl::new(pool.clone()),
             organization_repository: OrganizationRepositoryImpl::new(pool.clone()),
             project_repository: ProjectRepositoryImpl::new(pool.clone()),
