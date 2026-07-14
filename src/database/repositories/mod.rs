@@ -13,3 +13,5 @@ pub use scan_repository::{ScanRepository, ScanRepositoryImpl};
 pub use finding_repository::{FindingRepository, FindingRepositoryImpl};
 pub use report_repository::{ReportRepository, ReportRepositoryImpl};
 pub use api_key_repository::{ApiKeyRepository, ApiKeyRepositoryImpl};
+pub mod notification_repository;
+pub use notification_repository::{NotificationRepository, NotificationRepositoryImpl};

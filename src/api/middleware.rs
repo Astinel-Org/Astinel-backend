@@ -4,9 +4,25 @@ use axum::{
     response::Response,
 };
 use std::sync::Arc;
+use std::time::Instant;
 use crate::auth::{AuthContext, rbac::Role};
 use crate::database::repositories::ApiKeyRepository;
 use crate::state::AppState;
+
+fn record_request_metrics(path: &str, method: &str, status: u16, duration_ms: f64) {
+    let path_owned = path.to_string();
+    let method_owned = method.to_string();
+    let path_label: String = if path_owned.starts_with("/metrics") || path_owned.starts_with("/openapi.json") {
+        String::from("internal")
+    } else {
+        path_owned
+    };
+    metrics::counter!("api_requests_total", "path" => path_label.clone(), "method" => method_owned.clone()).increment(1);
+    metrics::histogram!("api_request_duration_ms", "path" => path_label, "method" => method_owned).record(duration_ms);
+    if status >= 500 {
+        metrics::counter!("api_errors_total", "code" => status.to_string()).increment(1);
+    }
+}
 
 fn sha256_hex(input: &str) -> String {
     use sha2::{Sha256, Digest};
@@ -36,6 +52,10 @@ pub async fn auth_middleware(
     mut request: Request,
     next: Next,
 ) -> Response {
+    let path = request.uri().path().to_string();
+    let method = request.method().to_string();
+    let start = Instant::now();
+
     let api_key_header = request
         .headers()
         .get("X-API-Key")
@@ -44,7 +64,10 @@ pub async fn auth_middleware(
     if let Some(key) = api_key_header {
         if let Some(context) = authenticate_api_key(&state, key).await {
             request.extensions_mut().insert(context);
-            return next.run(request).await;
+            let response = next.run(request).await;
+            let duration = start.elapsed().as_secs_f64() * 1000.0;
+            record_request_metrics(&path, &method, response.status().as_u16(), duration);
+            return response;
         }
     }
 
@@ -69,5 +92,8 @@ pub async fn auth_middleware(
     };
 
     request.extensions_mut().insert(context);
-    next.run(request).await
+    let response = next.run(request).await;
+    let duration = start.elapsed().as_secs_f64() * 1000.0;
+    record_request_metrics(&path, &method, response.status().as_u16(), duration);
+    response
 }

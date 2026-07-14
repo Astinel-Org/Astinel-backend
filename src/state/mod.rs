@@ -4,6 +4,7 @@ use crate::database::pool::DbPool;
 use crate::database::repositories::*;
 use crate::jobs::queue::JobQueue;
 use crate::services::{ScanService, GitHubService, GitHubConfig};
+use crate::database::repositories::notification_repository::NotificationRepositoryImpl;
 
 pub struct AppState {
     pub pool: DbPool,
@@ -24,12 +25,20 @@ pub struct AppState {
     pub report_repository: ReportRepositoryImpl,
     pub api_key_repository: ApiKeyRepositoryImpl,
     pub github_service: Option<GitHubService>,
+    pub metrics_handle: metrics_exporter_prometheus::PrometheusHandle,
+    pub notification_repository: NotificationRepositoryImpl,
 }
 
 impl AppState {
     pub async fn new(pool: DbPool, redis: RedisPool) -> Self {
         let queue = JobQueue::new(redis.clone());
         let jwt_service = JwtService::from_env();
+
+        let metrics_handle = {
+            let builder = metrics_exporter_prometheus::PrometheusBuilder::new();
+            builder.install_recorder()
+                .expect("failed to install Prometheus recorder")
+        };
 
         Self {
             scan_service: ScanService::new(pool.clone(), queue.clone(), ProjectRepositoryImpl::new(pool.clone())),
@@ -40,6 +49,7 @@ impl AppState {
             scan_status_cache: ScanStatusCache::new(redis.clone()),
             nonce_store: NonceStore::new(),
             jwt_service,
+            metrics_handle,
             redis,
             user_repository: UserRepositoryImpl::new(pool.clone()),
             organization_repository: OrganizationRepositoryImpl::new(pool.clone()),
@@ -48,6 +58,7 @@ impl AppState {
             finding_repository: FindingRepositoryImpl::new(pool.clone()),
             report_repository: ReportRepositoryImpl::new(pool.clone()),
             api_key_repository: ApiKeyRepositoryImpl::new(pool.clone()),
+            notification_repository: NotificationRepositoryImpl::new(pool.clone()),
             github_service: GitHubConfig::from_env().map(GitHubService::new),
             pool,
         }

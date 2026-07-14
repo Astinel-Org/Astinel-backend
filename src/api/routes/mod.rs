@@ -8,3 +8,5 @@ pub mod findings;
 pub mod wallet;
 pub mod webhooks;
 pub mod dashboard;
+pub mod notifications;
+pub mod openapi;
