@@ -7,3 +7,4 @@ pub mod reports;
 pub mod findings;
 pub mod wallet;
 pub mod webhooks;
+pub mod dashboard;

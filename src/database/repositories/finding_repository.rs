@@ -17,6 +17,7 @@ pub trait FindingRepository: Send + Sync {
         &self,
         scan_result_id: Uuid,
     ) -> Result<Vec<(String, i64)>, sqlx::Error>;
+    async fn update(&self, finding: &Finding) -> Result<Finding, sqlx::Error>;
     async fn list_with_filters(
         &self,
         scan_result_id: Uuid,
@@ -96,6 +97,16 @@ impl FindingRepository for FindingRepositoryImpl {
         )
         .bind(scan_result_id)
         .fetch_all(&self.pool)
+        .await
+    }
+
+    async fn update(&self, finding: &Finding) -> Result<Finding, sqlx::Error> {
+        sqlx::query_as::<_, Finding>(
+            "UPDATE findings SET is_suppressed = $1 WHERE id = $2 RETURNING *",
+        )
+        .bind(finding.is_suppressed)
+        .bind(finding.id)
+        .fetch_one(&self.pool)
         .await
     }
 
