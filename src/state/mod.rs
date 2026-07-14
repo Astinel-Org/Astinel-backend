@@ -5,6 +5,7 @@ use crate::database::repositories::*;
 use crate::jobs::queue::JobQueue;
 use crate::services::{ScanService, GitHubService, GitHubConfig};
 use crate::database::repositories::notification_repository::NotificationRepositoryImpl;
+use crate::ai::{AiProvider, provider};
 
 pub struct AppState {
     pub pool: DbPool,
@@ -27,6 +28,7 @@ pub struct AppState {
     pub github_service: Option<GitHubService>,
     pub metrics_handle: metrics_exporter_prometheus::PrometheusHandle,
     pub notification_repository: NotificationRepositoryImpl,
+    pub ai_provider: Box<dyn AiProvider>,
 }
 
 impl AppState {
@@ -58,6 +60,7 @@ impl AppState {
             finding_repository: FindingRepositoryImpl::new(pool.clone()),
             report_repository: ReportRepositoryImpl::new(pool.clone()),
             api_key_repository: ApiKeyRepositoryImpl::new(pool.clone()),
+            ai_provider: provider::create_provider(),
             notification_repository: NotificationRepositoryImpl::new(pool.clone()),
             github_service: GitHubConfig::from_env().map(GitHubService::new),
             pool,

@@ -10,6 +10,7 @@ use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use crate::state::AppState;
+use crate::ai::routes as ai_routes;
 
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
@@ -25,6 +26,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .merge(routes::dashboard::routes())
         .merge(routes::notifications::routes())
         .merge(routes::openapi::routes())
+        .merge(ai_routes::routes())
         .merge(metrics::routes())
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
