@@ -1,7 +1,7 @@
-use axum::{Router, routing::get, Json};
-use std::sync::Arc;
-use serde_json::Value;
 use crate::state::AppState;
+use axum::{routing::get, Json, Router};
+use serde_json::Value;
+use std::sync::Arc;
 
 async fn get_openapi() -> Json<Value> {
     Json(serde_json::json!({

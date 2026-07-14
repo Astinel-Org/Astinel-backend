@@ -1,12 +1,16 @@
-use axum::{Router, routing::get, Json, extract::{State, Path, Query}};
-use std::sync::Arc;
+use axum::{
+    extract::{Path, Query, State},
+    routing::get,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
+use crate::state::AppState;
 
 #[derive(Deserialize)]
 pub struct ListContractsParams {
@@ -94,5 +98,8 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/v1/contracts", get(list_supported))
         .route("/v1/contracts/health", get(contract_health))
-        .route("/v1/projects/{project_id}/contracts", get(list_deployments).post(deploy_contract))
+        .route(
+            "/v1/projects/{project_id}/contracts",
+            get(list_deployments).post(deploy_contract),
+        )
 }

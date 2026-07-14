@@ -1,7 +1,7 @@
-use axum::{Router, routing::get, Json, extract::State};
-use std::sync::Arc;
-use serde_json::{json, Value};
 use crate::state::AppState;
+use axum::{extract::State, routing::get, Json, Router};
+use serde_json::{json, Value};
+use std::sync::Arc;
 
 async fn health_check(State(_state): State<Arc<AppState>>) -> Json<Value> {
     Json(json!({

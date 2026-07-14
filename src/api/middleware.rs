@@ -1,3 +1,6 @@
+use crate::auth::{rbac::Role, AuthContext};
+use crate::database::repositories::ApiKeyRepository;
+use crate::state::AppState;
 use axum::{
     extract::{Request, State},
     middleware::Next,
@@ -5,27 +8,26 @@ use axum::{
 };
 use std::sync::Arc;
 use std::time::Instant;
-use crate::auth::{AuthContext, rbac::Role};
-use crate::database::repositories::ApiKeyRepository;
-use crate::state::AppState;
 
 fn record_request_metrics(path: &str, method: &str, status: u16, duration_ms: f64) {
     let path_owned = path.to_string();
     let method_owned = method.to_string();
-    let path_label: String = if path_owned.starts_with("/metrics") || path_owned.starts_with("/openapi.json") {
-        String::from("internal")
-    } else {
-        path_owned
-    };
+    let path_label: String =
+        if path_owned.starts_with("/metrics") || path_owned.starts_with("/openapi.json") {
+            String::from("internal")
+        } else {
+            path_owned
+        };
     metrics::counter!("api_requests_total", "path" => path_label.clone(), "method" => method_owned.clone()).increment(1);
-    metrics::histogram!("api_request_duration_ms", "path" => path_label, "method" => method_owned).record(duration_ms);
+    metrics::histogram!("api_request_duration_ms", "path" => path_label, "method" => method_owned)
+        .record(duration_ms);
     if status >= 500 {
         metrics::counter!("api_errors_total", "code" => status.to_string()).increment(1);
     }
 }
 
 fn sha256_hex(input: &str) -> String {
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(input.as_bytes());
     format!("{:x}", hasher.finalize())
@@ -78,16 +80,13 @@ pub async fn auth_middleware(
         .and_then(|v| v.strip_prefix("Bearer "));
 
     let context = match auth_header {
-        Some(token) => {
-            match state.jwt_service.validate_access_token(token) {
-                Ok(claims) => {
-                    let role = claims.role.parse::<Role>()
-                        .unwrap_or(Role::Viewer);
-                    AuthContext::new(claims.sub, claims.email, role, claims.org_id)
-                }
-                Err(_) => AuthContext::anonymous(),
+        Some(token) => match state.jwt_service.validate_access_token(token) {
+            Ok(claims) => {
+                let role = claims.role.parse::<Role>().unwrap_or(Role::Viewer);
+                AuthContext::new(claims.sub, claims.email, role, claims.org_id)
             }
-        }
+            Err(_) => AuthContext::anonymous(),
+        },
         None => AuthContext::anonymous(),
     };
 

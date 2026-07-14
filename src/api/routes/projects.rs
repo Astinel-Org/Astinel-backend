@@ -1,13 +1,17 @@
-use axum::{Router, routing::{get, post}, Json, extract::{State, Path}};
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
 use crate::database::models::Project;
 use crate::database::repositories::project_repository::ProjectRepository;
+use crate::state::AppState;
+use axum::{
+    extract::{Path, State},
+    routing::{get, post},
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct CreateProjectRequest {
@@ -49,7 +53,9 @@ async fn create_project(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let org_id = auth.org_id.ok_or_else(|| ApiError::BadRequest("No organization context".to_string()))?;
+    let org_id = auth
+        .org_id
+        .ok_or_else(|| ApiError::BadRequest("No organization context".to_string()))?;
 
     let project = Project::new(
         org_id,
@@ -81,18 +87,24 @@ async fn list_projects(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
     let org_id = auth.org_id.unwrap_or_default();
-    let projects = state.project_repository.find_by_organization(org_id).await?;
-    let resp: Vec<ProjectResponse> = projects.into_iter().map(|p| ProjectResponse {
-        id: p.id.to_string(),
-        name: p.name,
-        slug: p.slug,
-        description: p.description,
-        repository_url: p.repository_url,
-        default_branch: p.default_branch,
-        language: p.language,
-        created_at: p.created_at.to_rfc3339(),
-        updated_at: p.updated_at.to_rfc3339(),
-    }).collect();
+    let projects = state
+        .project_repository
+        .find_by_organization(org_id)
+        .await?;
+    let resp: Vec<ProjectResponse> = projects
+        .into_iter()
+        .map(|p| ProjectResponse {
+            id: p.id.to_string(),
+            name: p.name,
+            slug: p.slug,
+            description: p.description,
+            repository_url: p.repository_url,
+            default_branch: p.default_branch,
+            language: p.language,
+            created_at: p.created_at.to_rfc3339(),
+            updated_at: p.updated_at.to_rfc3339(),
+        })
+        .collect();
     Ok(Json(resp))
 }
 
@@ -105,7 +117,8 @@ async fn get_project(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let project = state.project_repository
+    let project = state
+        .project_repository
         .find_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Project not found".to_string()))?;
@@ -133,7 +146,8 @@ async fn update_project(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let mut project = state.project_repository
+    let mut project = state
+        .project_repository
         .find_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Project not found".to_string()))?;
@@ -179,7 +193,8 @@ async fn delete_project(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let project = state.project_repository
+    let project = state
+        .project_repository
         .find_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Project not found".to_string()))?;
@@ -192,5 +207,8 @@ async fn delete_project(
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/v1/projects", post(create_project).get(list_projects))
-        .route("/v1/projects/{id}", get(get_project).put(update_project).delete(delete_project))
+        .route(
+            "/v1/projects/{id}",
+            get(get_project).put(update_project).delete(delete_project),
+        )
 }

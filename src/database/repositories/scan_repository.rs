@@ -10,10 +10,7 @@ pub trait ScanRepository: Send + Sync {
     async fn create_job(&self, job: &ScanJob) -> Result<ScanJob, sqlx::Error>;
     async fn find_job_by_id(&self, id: Uuid) -> Result<Option<ScanJob>, sqlx::Error>;
     async fn update_job(&self, job: &ScanJob) -> Result<ScanJob, sqlx::Error>;
-    async fn list_jobs_for_project(
-        &self,
-        project_id: Uuid,
-    ) -> Result<Vec<ScanJob>, sqlx::Error>;
+    async fn list_jobs_for_project(&self, project_id: Uuid) -> Result<Vec<ScanJob>, sqlx::Error>;
 
     // Scan results
     async fn create_result(&self, result: &ScanResult) -> Result<ScanResult, sqlx::Error>;
@@ -82,10 +79,7 @@ impl ScanRepository for ScanRepositoryImpl {
         .await
     }
 
-    async fn list_jobs_for_project(
-        &self,
-        project_id: Uuid,
-    ) -> Result<Vec<ScanJob>, sqlx::Error> {
+    async fn list_jobs_for_project(&self, project_id: Uuid) -> Result<Vec<ScanJob>, sqlx::Error> {
         sqlx::query_as::<_, ScanJob>(
             "SELECT * FROM scan_jobs WHERE project_id = $1 ORDER BY created_at DESC",
         )

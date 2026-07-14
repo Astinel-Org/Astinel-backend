@@ -35,12 +35,10 @@ impl UserRepository for UserRepositoryImpl {
     }
 
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
-        sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL",
-        )
-        .bind(email)
-        .fetch_optional(&self.pool)
-        .await
+        sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL")
+            .bind(email)
+            .fetch_optional(&self.pool)
+            .await
     }
 
     async fn find_by_stellar_public_key(&self, pk: &str) -> Result<Option<User>, sqlx::Error> {

@@ -1,12 +1,12 @@
+use crate::database::models::ScanJob;
+use crate::database::pool::DbPool;
+use crate::database::repositories::{ProjectRepositoryImpl, ScanRepository, ScanRepositoryImpl};
+use crate::jobs::queue::{JobQueue, QueuedJob};
+use crate::jobs::scan_job::ScanJobExecutor;
+use crate::jobs::status::JobStatus;
 use std::sync::Arc;
 use tracing::instrument;
 use uuid::Uuid;
-use crate::database::pool::DbPool;
-use crate::database::models::ScanJob;
-use crate::database::repositories::{ScanRepository, ScanRepositoryImpl, ProjectRepositoryImpl};
-use crate::jobs::queue::{JobQueue, QueuedJob};
-use crate::jobs::status::JobStatus;
-use crate::jobs::scan_job::ScanJobExecutor;
 
 pub struct ScanService {
     pool: DbPool,
@@ -28,7 +28,11 @@ impl ScanService {
     }
 
     #[instrument(skip(self), fields(project_id = %project_id))]
-    pub async fn enqueue_scan(&self, project_id: Uuid, branch: String) -> Result<ScanJob, crate::api::errors::ApiError> {
+    pub async fn enqueue_scan(
+        &self,
+        project_id: Uuid,
+        branch: String,
+    ) -> Result<ScanJob, crate::api::errors::ApiError> {
         let repo = ScanRepositoryImpl::new(self.pool.clone());
 
         let job = ScanJob::new(
@@ -51,8 +55,9 @@ impl ScanService {
             config: serde_json::json!({}),
         };
 
-        self.queue.enqueue(queued).await
-            .map_err(|_| crate::api::errors::ApiError::Internal("Failed to enqueue scan".to_string()))?;
+        self.queue.enqueue(queued).await.map_err(|_| {
+            crate::api::errors::ApiError::Internal("Failed to enqueue scan".to_string())
+        })?;
 
         Ok(saved)
     }

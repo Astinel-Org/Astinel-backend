@@ -1,13 +1,13 @@
-use axum::{Router, routing::post, Json, extract::State};
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use crate::state::AppState;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
-use crate::auth::{AuthTokens, PasswordService, AuthError};
+use crate::api::response::ApiResponse;
+use crate::auth::{AuthError, AuthTokens, PasswordService};
 use crate::database::models::user::UserRole;
 use crate::database::models::{Organization, OrganizationMember};
-use crate::database::repositories::{UserRepository, OrganizationRepository};
+use crate::database::repositories::{OrganizationRepository, UserRepository};
+use crate::state::AppState;
+use axum::{extract::State, routing::post, Json, Router};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
@@ -26,7 +26,8 @@ async fn login(
     State(state): State<Arc<AppState>>,
     Json(req): Json<LoginRequest>,
 ) -> Result<Json<ApiResponse<LoginResponse>>, ApiError> {
-    let user = state.user_repository
+    let user = state
+        .user_repository
         .find_by_email(&req.email)
         .await?
         .ok_or(ApiError::Auth(AuthError::InvalidCredentials))?;
@@ -38,7 +39,8 @@ async fn login(
         return Err(ApiError::Auth(AuthError::InvalidCredentials));
     }
 
-    let tokens = state.jwt_service
+    let tokens = state
+        .jwt_service
         .issue_tokens(user.id, &user.email, &user.role.to_string(), None)
         .map_err(|e| ApiError::Internal(e.to_string()))?;
 
@@ -60,15 +62,13 @@ async fn register(
     State(state): State<Arc<AppState>>,
     Json(req): Json<RegisterRequest>,
 ) -> Result<Json<ApiResponse<LoginResponse>>, ApiError> {
-    let existing = state.user_repository
-        .find_by_email(&req.email)
-        .await?;
+    let existing = state.user_repository.find_by_email(&req.email).await?;
     if existing.is_some() {
         return Err(ApiError::Auth(AuthError::EmailAlreadyExists));
     }
 
-    let password_hash = PasswordService::hash(&req.password)
-        .map_err(|e| ApiError::Internal(e.to_string()))?;
+    let password_hash =
+        PasswordService::hash(&req.password).map_err(|e| ApiError::Internal(e.to_string()))?;
 
     let role = UserRole::User;
     let user = crate::database::models::User::new(
@@ -78,9 +78,7 @@ async fn register(
         role.clone(),
     );
 
-    let saved = state.user_repository
-        .create(&user)
-        .await?;
+    let saved = state.user_repository.create(&user).await?;
 
     // Auto-create a personal organization for the new user
     let base_slug = slugify(&saved.display_name);
@@ -91,16 +89,10 @@ async fn register(
         saved.id,
         "free".to_string(),
     );
-    let created_org = state.organization_repository
-        .create(&org)
-        .await?;
+    let created_org = state.organization_repository.create(&org).await?;
 
     // Add user as Owner member
-    let member = OrganizationMember::new(
-        created_org.id,
-        saved.id,
-        "owner".to_string(),
-    );
+    let member = OrganizationMember::new(created_org.id, saved.id, "owner".to_string());
     sqlx::query(
         "INSERT INTO organization_members (id, organization_id, user_id, role, invited_by, joined_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
     )
@@ -116,8 +108,14 @@ async fn register(
     .await
     .map_err(|e| ApiError::Internal(e.to_string()))?;
 
-    let tokens = state.jwt_service
-        .issue_tokens(saved.id, &saved.email, &role.to_string(), Some(created_org.id))
+    let tokens = state
+        .jwt_service
+        .issue_tokens(
+            saved.id,
+            &saved.email,
+            &role.to_string(),
+            Some(created_org.id),
+        )
         .map_err(|e| ApiError::Internal(e.to_string()))?;
 
     Ok(ApiResponse::ok(LoginResponse {
@@ -128,13 +126,18 @@ async fn register(
 }
 
 fn slugify(name: &str) -> String {
-    let slug: String = name.to_lowercase()
+    let slug: String = name
+        .to_lowercase()
         .chars()
         .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_' || *c == ' ')
         .map(|c| if c == ' ' { '-' } else { c })
         .collect();
     let trimmed = slug.trim_matches('-').to_string();
-    if trimmed.is_empty() { "user".to_string() } else { trimmed }
+    if trimmed.is_empty() {
+        "user".to_string()
+    } else {
+        trimmed
+    }
 }
 
 #[derive(Deserialize)]
@@ -146,11 +149,13 @@ async fn refresh(
     State(state): State<Arc<AppState>>,
     Json(req): Json<RefreshRequest>,
 ) -> Result<Json<ApiResponse<AuthTokens>>, ApiError> {
-    let claims = state.jwt_service
+    let claims = state
+        .jwt_service
         .validate_refresh_token(&req.refresh_token)
         .map_err(|_| ApiError::Auth(AuthError::RefreshExpired))?;
 
-    let tokens = state.jwt_service
+    let tokens = state
+        .jwt_service
         .issue_tokens(claims.sub, &claims.email, &claims.role, claims.org_id)
         .map_err(|e| ApiError::Internal(e.to_string()))?;
 

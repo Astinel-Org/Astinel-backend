@@ -1,13 +1,17 @@
-use axum::{Router, routing::get, Json, extract::{State, Path, Query}};
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
 use crate::database::repositories::finding_repository::FindingRepository;
 use crate::database::repositories::scan_repository::ScanRepository;
+use crate::state::AppState;
+use axum::{
+    extract::{Path, Query, State},
+    routing::get,
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct FindingsQuery {
@@ -52,30 +56,31 @@ async fn list_findings(
     let findings = if let Some(scan_id) = query.scan_id {
         let result = state.scan_repository.find_result_by_job(scan_id).await?;
         match result {
-            Some(r) => state.finding_repository
-                .list_by_scan_result(r.id)
-                .await?,
+            Some(r) => state.finding_repository.list_by_scan_result(r.id).await?,
             None => vec![],
         }
     } else {
         vec![]
     };
 
-    let resp = findings.into_iter().map(|f| FindingResponse {
-        id: f.id.to_string(),
-        scan_result_id: f.scan_result_id.to_string(),
-        rule_id: f.rule_id,
-        severity: f.severity,
-        category: f.category,
-        file_path: f.file_path,
-        line: f.line,
-        column: f.column,
-        message: f.message,
-        recommendation: f.recommendation,
-        fix_example: f.fix_example,
-        is_suppressed: f.is_suppressed,
-        created_at: f.created_at.to_rfc3339(),
-    }).collect();
+    let resp = findings
+        .into_iter()
+        .map(|f| FindingResponse {
+            id: f.id.to_string(),
+            scan_result_id: f.scan_result_id.to_string(),
+            rule_id: f.rule_id,
+            severity: f.severity,
+            category: f.category,
+            file_path: f.file_path,
+            line: f.line,
+            column: f.column,
+            message: f.message,
+            recommendation: f.recommendation,
+            fix_example: f.fix_example,
+            is_suppressed: f.is_suppressed,
+            created_at: f.created_at.to_rfc3339(),
+        })
+        .collect();
     Ok(Json(resp))
 }
 
@@ -88,7 +93,8 @@ async fn get_finding(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let finding = state.finding_repository
+    let finding = state
+        .finding_repository
         .find_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Finding not found".to_string()))?;
@@ -120,7 +126,8 @@ async fn patch_finding(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let mut finding = state.finding_repository
+    let mut finding = state
+        .finding_repository
         .find_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Finding not found".to_string()))?;

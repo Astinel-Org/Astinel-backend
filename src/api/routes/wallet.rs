@@ -1,14 +1,14 @@
-use axum::{Router, routing::post, Json, extract::State};
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use base64::Engine;
-use base64::engine::general_purpose::STANDARD as BASE64;
-use crate::state::AppState;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
-use crate::auth::{AuthTokens, AuthError};
+use crate::api::response::ApiResponse;
+use crate::auth::{AuthError, AuthTokens};
 use crate::database::models::user::UserRole;
-use crate::database::repositories::{UserRepository, OrganizationRepository};
+use crate::database::repositories::{OrganizationRepository, UserRepository};
+use crate::state::AppState;
+use axum::{extract::State, routing::post, Json, Router};
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize)]
 pub struct ChallengeRequest {
@@ -48,18 +48,23 @@ async fn wallet_login(
     State(state): State<Arc<AppState>>,
     Json(req): Json<WalletLoginRequest>,
 ) -> Result<Json<ApiResponse<WalletLoginResponse>>, ApiError> {
-    let nonce = state.nonce_store.consume(&req.public_key).await
+    let nonce = state
+        .nonce_store
+        .consume(&req.public_key)
+        .await
         .ok_or(ApiError::Auth(AuthError::InvalidCredentials))?;
 
     let message = crate::auth::wallet::build_challenge_message(&nonce);
 
-    let signature = BASE64.decode(req.signed_message.as_bytes())
+    let signature = BASE64
+        .decode(req.signed_message.as_bytes())
         .map_err(|_| ApiError::BadRequest("Invalid base64 signature".to_string()))?;
 
     crate::auth::wallet::verify_signature(&req.public_key, message.as_bytes(), &signature)
         .map_err(|_| ApiError::Auth(AuthError::InvalidCredentials))?;
 
-    let existing = state.user_repository
+    let existing = state
+        .user_repository
         .find_by_stellar_public_key(&req.public_key)
         .await?;
 
@@ -71,17 +76,11 @@ async fn wallet_login(
             .map_err(|e| ApiError::Internal(e.to_string()))?;
         let display_name = format!("Wallet {}", &req.public_key[..8]);
 
-        let mut user = crate::database::models::User::new(
-            email,
-            password_hash,
-            display_name,
-            UserRole::User,
-        );
+        let mut user =
+            crate::database::models::User::new(email, password_hash, display_name, UserRole::User);
         user.stellar_public_key = Some(req.public_key.clone());
 
-        let saved = state.user_repository
-            .create(&user)
-            .await?;
+        let saved = state.user_repository.create(&user).await?;
 
         let slug = format!("wallet-{}", &saved.id.to_string()[..8]);
         let org = crate::database::models::Organization::new(
@@ -90,9 +89,7 @@ async fn wallet_login(
             saved.id,
             "free".to_string(),
         );
-        let created_org = state.organization_repository
-            .create(&org)
-            .await?;
+        let created_org = state.organization_repository.create(&org).await?;
 
         let member = crate::database::models::OrganizationMember::new(
             created_org.id,
@@ -117,7 +114,8 @@ async fn wallet_login(
         (saved.id, true)
     };
 
-    let tokens = state.jwt_service
+    let tokens = state
+        .jwt_service
         .issue_tokens(user_id, "wallet@astinel.io", "user", None)
         .map_err(|e| ApiError::Internal(e.to_string()))?;
 

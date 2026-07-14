@@ -7,7 +7,11 @@ use crate::database::pool::DbPool;
 #[async_trait]
 pub trait NotificationRepository: Send + Sync {
     async fn create(&self, event: &NotificationEvent) -> Result<NotificationEvent, sqlx::Error>;
-    async fn list_by_organization(&self, org_id: Uuid, limit: i64) -> Result<Vec<NotificationEvent>, sqlx::Error>;
+    async fn list_by_organization(
+        &self,
+        org_id: Uuid,
+        limit: i64,
+    ) -> Result<Vec<NotificationEvent>, sqlx::Error>;
     async fn count_unread(&self, org_id: Uuid) -> Result<i64, sqlx::Error>;
     async fn mark_read(&self, id: Uuid) -> Result<(), sqlx::Error>;
     async fn mark_all_read(&self, org_id: Uuid) -> Result<(), sqlx::Error>;
@@ -43,7 +47,11 @@ impl NotificationRepository for NotificationRepositoryImpl {
         .await
     }
 
-    async fn list_by_organization(&self, org_id: Uuid, limit: i64) -> Result<Vec<NotificationEvent>, sqlx::Error> {
+    async fn list_by_organization(
+        &self,
+        org_id: Uuid,
+        limit: i64,
+    ) -> Result<Vec<NotificationEvent>, sqlx::Error> {
         sqlx::query_as::<_, NotificationEvent>(
             "SELECT * FROM notification_events WHERE organization_id = $1 ORDER BY created_at DESC LIMIT $2",
         )

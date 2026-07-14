@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Role {
@@ -66,24 +66,39 @@ impl Permission {
     pub fn requires_role(role: Role) -> Vec<Self> {
         match role {
             Role::Owner => vec![
-                Self::CreateProject, Self::UpdateProject, Self::DeleteProject,
-                Self::TriggerScan, Self::ViewScan, Self::ViewReport,
-                Self::ManageMembers, Self::ManageApiKeys, Self::ManageWebhooks,
-                Self::ManageSettings, Self::ViewFindings, Self::Administer,
+                Self::CreateProject,
+                Self::UpdateProject,
+                Self::DeleteProject,
+                Self::TriggerScan,
+                Self::ViewScan,
+                Self::ViewReport,
+                Self::ManageMembers,
+                Self::ManageApiKeys,
+                Self::ManageWebhooks,
+                Self::ManageSettings,
+                Self::ViewFindings,
+                Self::Administer,
             ],
             Role::Admin => vec![
-                Self::CreateProject, Self::UpdateProject, Self::DeleteProject,
-                Self::TriggerScan, Self::ViewScan, Self::ViewReport,
-                Self::ManageMembers, Self::ManageApiKeys, Self::ViewFindings,
-            ],
-            Role::Developer => vec![
-                Self::CreateProject, Self::UpdateProject,
-                Self::TriggerScan, Self::ViewScan, Self::ViewReport,
+                Self::CreateProject,
+                Self::UpdateProject,
+                Self::DeleteProject,
+                Self::TriggerScan,
+                Self::ViewScan,
+                Self::ViewReport,
+                Self::ManageMembers,
+                Self::ManageApiKeys,
                 Self::ViewFindings,
             ],
-            Role::Viewer => vec![
-                Self::ViewScan, Self::ViewReport, Self::ViewFindings,
+            Role::Developer => vec![
+                Self::CreateProject,
+                Self::UpdateProject,
+                Self::TriggerScan,
+                Self::ViewScan,
+                Self::ViewReport,
+                Self::ViewFindings,
             ],
+            Role::Viewer => vec![Self::ViewScan, Self::ViewReport, Self::ViewFindings],
         }
     }
 

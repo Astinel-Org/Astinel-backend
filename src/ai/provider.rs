@@ -2,7 +2,11 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait AiProvider: Send + Sync {
-    async fn generate_fix_suggestion(&self, finding_context: &str, code_snippet: &str) -> Result<String, String>;
+    async fn generate_fix_suggestion(
+        &self,
+        finding_context: &str,
+        code_snippet: &str,
+    ) -> Result<String, String>;
     async fn analyze_security(&self, query: &str, scan_summary: &str) -> Result<String, String>;
     async fn health(&self) -> Result<bool, String>;
 }
@@ -38,7 +42,8 @@ impl OllamaProvider {
             "stream": false,
         });
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(&url)
             .json(&body)
             .send()
@@ -63,7 +68,11 @@ impl OllamaProvider {
 
 #[async_trait]
 impl AiProvider for OllamaProvider {
-    async fn generate_fix_suggestion(&self, finding_context: &str, code_snippet: &str) -> Result<String, String> {
+    async fn generate_fix_suggestion(
+        &self,
+        finding_context: &str,
+        code_snippet: &str,
+    ) -> Result<String, String> {
         let system = "You are a security expert for Stellar Soroban smart contracts. \
                       Given a finding and the relevant code, suggest a specific fix. \
                       Be concise and provide code examples.";
@@ -91,7 +100,8 @@ impl AiProvider for OllamaProvider {
 
     async fn health(&self) -> Result<bool, String> {
         let url = format!("{}/api/tags", self.base_url);
-        let resp = self.client
+        let resp = self
+            .client
             .get(&url)
             .send()
             .await
@@ -105,7 +115,11 @@ pub struct DisabledProvider;
 
 #[async_trait]
 impl AiProvider for DisabledProvider {
-    async fn generate_fix_suggestion(&self, _finding_context: &str, _code_snippet: &str) -> Result<String, String> {
+    async fn generate_fix_suggestion(
+        &self,
+        _finding_context: &str,
+        _code_snippet: &str,
+    ) -> Result<String, String> {
         Err("AI provider is not configured".to_string())
     }
 
@@ -119,7 +133,11 @@ impl AiProvider for DisabledProvider {
 }
 
 pub fn create_provider() -> Box<dyn AiProvider> {
-    if std::env::var("OLLAMA_URL").is_ok() || std::env::var("AI_PROVIDER").map(|v| v == "ollama").unwrap_or(false) {
+    if std::env::var("OLLAMA_URL").is_ok()
+        || std::env::var("AI_PROVIDER")
+            .map(|v| v == "ollama")
+            .unwrap_or(false)
+    {
         Box::new(OllamaProvider::from_env())
     } else {
         Box::new(DisabledProvider)

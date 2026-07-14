@@ -49,12 +49,9 @@ impl DbConfig {
                     .ok()
                     .and_then(|v| v.parse().ok())
                     .unwrap_or(5432),
-                database: std::env::var("DB_DATABASE")
-                    .unwrap_or_else(|_| "astinel".to_string()),
-                username: std::env::var("DB_USERNAME")
-                    .unwrap_or_else(|_| "postgres".to_string()),
-                password: std::env::var("DB_PASSWORD")
-                    .unwrap_or_else(|_| "postgres".to_string()),
+                database: std::env::var("DB_DATABASE").unwrap_or_else(|_| "astinel".to_string()),
+                username: std::env::var("DB_USERNAME").unwrap_or_else(|_| "postgres".to_string()),
+                password: std::env::var("DB_PASSWORD").unwrap_or_else(|_| "postgres".to_string()),
                 max_connections: std::env::var("DB_MAX_CONNECTIONS")
                     .ok()
                     .and_then(|v| v.parse().ok())

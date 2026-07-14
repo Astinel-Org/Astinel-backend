@@ -1,17 +1,17 @@
-use std::time::{SystemTime, UNIX_EPOCH};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: Uuid,        // user id
+    pub sub: Uuid, // user id
     pub email: String,
     pub role: String,
     pub org_id: Option<Uuid>,
     pub exp: usize,
     pub iat: usize,
-    pub jti: String,      // token id
+    pub jti: String, // token id
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,20 +33,31 @@ impl JwtService {
         Self {
             access_secret,
             refresh_secret,
-            access_ttl_secs: 3600,        // 1 hour
-            refresh_ttl_secs: 2592000,     // 30 days
+            access_ttl_secs: 3600,     // 1 hour
+            refresh_ttl_secs: 2592000, // 30 days
         }
     }
 
     pub fn from_env() -> Self {
         Self::new(
-            std::env::var("JWT_ACCESS_SECRET").unwrap_or_else(|_| "astinel-access-secret-dev".to_string()),
-            std::env::var("JWT_REFRESH_SECRET").unwrap_or_else(|_| "astinel-refresh-secret-dev".to_string()),
+            std::env::var("JWT_ACCESS_SECRET")
+                .unwrap_or_else(|_| "astinel-access-secret-dev".to_string()),
+            std::env::var("JWT_REFRESH_SECRET")
+                .unwrap_or_else(|_| "astinel-refresh-secret-dev".to_string()),
         )
     }
 
-    pub fn issue_tokens(&self, user_id: Uuid, email: &str, role: &str, org_id: Option<Uuid>) -> Result<AuthTokens, jsonwebtoken::errors::Error> {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as usize;
+    pub fn issue_tokens(
+        &self,
+        user_id: Uuid,
+        email: &str,
+        role: &str,
+        org_id: Option<Uuid>,
+    ) -> Result<AuthTokens, jsonwebtoken::errors::Error> {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize;
 
         let access_claims = Claims {
             sub: user_id,
@@ -82,7 +93,10 @@ impl JwtService {
         })
     }
 
-    pub fn validate_access_token(&self, token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+    pub fn validate_access_token(
+        &self,
+        token: &str,
+    ) -> Result<Claims, jsonwebtoken::errors::Error> {
         let data = decode::<Claims>(
             token,
             &DecodingKey::from_secret(self.access_secret.as_bytes()),
@@ -91,7 +105,10 @@ impl JwtService {
         Ok(data.claims)
     }
 
-    pub fn validate_refresh_token(&self, token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+    pub fn validate_refresh_token(
+        &self,
+        token: &str,
+    ) -> Result<Claims, jsonwebtoken::errors::Error> {
         let data = decode::<Claims>(
             token,
             &DecodingKey::from_secret(self.refresh_secret.as_bytes()),

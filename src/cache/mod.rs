@@ -1,3 +1,3 @@
 pub mod redis;
 
-pub use redis::{RedisPool, SessionStore, RateLimiter, WebhookDedup, ScanStatusCache};
+pub use redis::{RateLimiter, RedisPool, ScanStatusCache, SessionStore, WebhookDedup};

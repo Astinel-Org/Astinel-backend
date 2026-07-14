@@ -15,7 +15,11 @@ impl GitHubConfig {
         let app_id = std::env::var("GITHUB_APP_ID").ok()?;
         let private_key = std::env::var("GITHUB_APP_PRIVATE_KEY").ok()?;
         let webhook_secret = std::env::var("GITHUB_WEBHOOK_SECRET").ok()?;
-        Some(Self { app_id, private_key, webhook_secret })
+        Some(Self {
+            app_id,
+            private_key,
+            webhook_secret,
+        })
     }
 }
 
@@ -83,7 +87,10 @@ impl GitHubService {
             .map_err(|e| e.to_string())
     }
 
-    pub async fn list_repositories(&self, installation_id: i64) -> Result<Vec<serde_json::Value>, String> {
+    pub async fn list_repositories(
+        &self,
+        installation_id: i64,
+    ) -> Result<Vec<serde_json::Value>, String> {
         let token = self.get_installation_token(installation_id).await?;
         let octocrab = Self::client_for_token(&token)?;
 
@@ -92,21 +99,20 @@ impl GitHubService {
             .await
             .map_err(|e| e.to_string())?;
 
-        Ok(body["repositories"]
-            .as_array()
-            .cloned()
-            .unwrap_or_default())
+        Ok(body["repositories"].as_array().cloned().unwrap_or_default())
     }
 
-    pub async fn get_repository(&self, installation_id: i64, owner: &str, repo: &str) -> Result<serde_json::Value, String> {
+    pub async fn get_repository(
+        &self,
+        installation_id: i64,
+        owner: &str,
+        repo: &str,
+    ) -> Result<serde_json::Value, String> {
         let token = self.get_installation_token(installation_id).await?;
         let octocrab = Self::client_for_token(&token)?;
 
         octocrab
-            .get::<serde_json::Value, _, _>(
-                &format!("/repos/{}/{}", owner, repo),
-                None::<&()>,
-            )
+            .get::<serde_json::Value, _, _>(&format!("/repos/{}/{}", owner, repo), None::<&()>)
             .await
             .map_err(|e| e.to_string())
     }
@@ -121,7 +127,9 @@ impl GitHubService {
 
         let mut mac = Hmac::<Sha256>::new_from_slice(secret).expect("HMAC key");
         mac.update(payload);
-        let computed: String = mac.finalize().into_bytes()
+        let computed: String = mac
+            .finalize()
+            .into_bytes()
             .iter()
             .map(|b| format!("{:02x}", b))
             .collect();

@@ -17,12 +17,7 @@ pub struct Organization {
 }
 
 impl Organization {
-    pub fn new(
-        name: String,
-        slug: String,
-        owner_user_id: Uuid,
-        billing_plan: String,
-    ) -> Self {
+    pub fn new(name: String, slug: String, owner_user_id: Uuid, billing_plan: String) -> Self {
         let now = Utc::now();
         Self {
             id: Uuid::new_v4(),

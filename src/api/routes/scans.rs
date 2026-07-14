@@ -1,12 +1,16 @@
-use axum::{Router, routing::{get, post}, Json, extract::{State, Path}};
-use std::sync::Arc;
-use serde::Serialize;
-use uuid::Uuid;
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
 use crate::database::repositories::scan_repository::ScanRepository;
+use crate::state::AppState;
+use axum::{
+    extract::{Path, State},
+    routing::{get, post},
+    Json, Router,
+};
+use serde::Serialize;
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub struct ScanResponse {
@@ -38,19 +42,19 @@ async fn trigger_scan(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let project_id_str = req.get("project_id")
+    let project_id_str = req
+        .get("project_id")
         .and_then(|v| v.as_str())
         .ok_or_else(|| ApiError::BadRequest("Missing project_id".to_string()))?;
     let project_id = Uuid::parse_str(project_id_str)
         .map_err(|_| ApiError::BadRequest("Invalid project_id".to_string()))?;
-    let branch = req.get("branch")
+    let branch = req
+        .get("branch")
         .and_then(|v| v.as_str())
         .unwrap_or("main")
         .to_string();
 
-    let job = state.scan_service
-        .enqueue_scan(project_id, branch)
-        .await?;
+    let job = state.scan_service.enqueue_scan(project_id, branch).await?;
 
     Ok(ApiResponse::ok(ScanResponse {
         id: job.id.to_string(),
@@ -74,13 +78,19 @@ async fn list_scans(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
     let org_id = auth.org_id.unwrap_or_default();
-    let scans = state.scan_repository
-        .list_jobs_for_project(org_id)
-        .await?;
+    let scans = state.scan_repository.list_jobs_for_project(org_id).await?;
     let mut resp = Vec::new();
     for j in scans {
-        let result = state.scan_repository.find_result_by_job(j.id).await.ok().flatten();
-        let progress = state.scan_status_cache.get_progress(&j.id.to_string()).await
+        let result = state
+            .scan_repository
+            .find_result_by_job(j.id)
+            .await
+            .ok()
+            .flatten();
+        let progress = state
+            .scan_status_cache
+            .get_progress(&j.id.to_string())
+            .await
             .map(|(p, _)| p)
             .unwrap_or(0);
         resp.push(ScanResponse {
@@ -107,13 +117,22 @@ async fn get_scan(
     if !auth.is_authenticated {
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
-    let job = state.scan_repository
+    let job = state
+        .scan_repository
         .find_job_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Scan not found".to_string()))?;
 
-    let result = state.scan_repository.find_result_by_job(job.id).await.ok().flatten();
-    let progress = state.scan_status_cache.get_progress(&id.to_string()).await
+    let result = state
+        .scan_repository
+        .find_result_by_job(job.id)
+        .await
+        .ok()
+        .flatten();
+    let progress = state
+        .scan_status_cache
+        .get_progress(&id.to_string())
+        .await
         .map(|(p, _)| p)
         .unwrap_or(0);
 
@@ -140,7 +159,8 @@ async fn cancel_scan(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let job = state.scan_repository
+    let job = state
+        .scan_repository
         .find_job_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Scan not found".to_string()))?;
@@ -154,7 +174,11 @@ async fn cancel_scan(
     updated.completed_at = Some(chrono::Utc::now());
     state.scan_repository.update_job(&updated).await?;
 
-    state.scan_status_cache.mark_cancelled(&id.to_string()).await.ok();
+    state
+        .scan_status_cache
+        .mark_cancelled(&id.to_string())
+        .await
+        .ok();
 
     Ok(ApiResponse::ok(()))
 }
@@ -168,12 +192,14 @@ async fn retry_scan(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let job = state.scan_repository
+    let job = state
+        .scan_repository
         .find_job_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Scan not found".to_string()))?;
 
-    let new_job = state.scan_service
+    let new_job = state
+        .scan_service
         .enqueue_scan(job.project_id, job.branch)
         .await?;
 
@@ -200,12 +226,16 @@ async fn get_scan_progress(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let job = state.scan_repository
+    let job = state
+        .scan_repository
         .find_job_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Scan not found".to_string()))?;
 
-    let (progress, _phase) = state.scan_status_cache.get_progress(&id.to_string()).await
+    let (progress, _phase) = state
+        .scan_status_cache
+        .get_progress(&id.to_string())
+        .await
         .unwrap_or((0, "unknown".to_string()));
 
     Ok(ApiResponse::ok(ProgressResponse {
@@ -224,7 +254,8 @@ async fn get_scan_result(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let result = state.scan_repository
+    let result = state
+        .scan_repository
         .find_result_by_job(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Scan result not found".to_string()))?;

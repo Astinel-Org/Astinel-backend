@@ -8,10 +8,7 @@ use crate::database::pool::DbPool;
 pub trait FindingRepository: Send + Sync {
     async fn create(&self, finding: &Finding) -> Result<Finding, sqlx::Error>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Finding>, sqlx::Error>;
-    async fn list_by_scan_result(
-        &self,
-        scan_result_id: Uuid,
-    ) -> Result<Vec<Finding>, sqlx::Error>;
+    async fn list_by_scan_result(&self, scan_result_id: Uuid) -> Result<Vec<Finding>, sqlx::Error>;
     async fn list_by_project(&self, project_id: Uuid) -> Result<Vec<Finding>, sqlx::Error>;
     async fn count_by_severity(
         &self,
@@ -67,10 +64,7 @@ impl FindingRepository for FindingRepositoryImpl {
             .await
     }
 
-    async fn list_by_scan_result(
-        &self,
-        scan_result_id: Uuid,
-    ) -> Result<Vec<Finding>, sqlx::Error> {
+    async fn list_by_scan_result(&self, scan_result_id: Uuid) -> Result<Vec<Finding>, sqlx::Error> {
         sqlx::query_as::<_, Finding>(
             "SELECT * FROM findings WHERE scan_result_id = $1 ORDER BY severity DESC, file_path ASC",
         )
@@ -118,9 +112,7 @@ impl FindingRepository for FindingRepositoryImpl {
         category: Option<&str>,
         file_path: Option<&str>,
     ) -> Result<Vec<Finding>, sqlx::Error> {
-        let mut query = String::from(
-            "SELECT * FROM findings WHERE scan_result_id = $1",
-        );
+        let mut query = String::from("SELECT * FROM findings WHERE scan_result_id = $1");
         let mut param_index = 2;
 
         if severity.is_some() {

@@ -1,11 +1,11 @@
-use axum::{Router, routing::get, Json, extract::State};
-use std::sync::Arc;
-use serde::Serialize;
-use uuid::Uuid;
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
+use crate::state::AppState;
+use axum::{extract::State, routing::get, Json, Router};
+use serde::Serialize;
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub struct DashboardResponse {

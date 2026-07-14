@@ -1,9 +1,9 @@
-use axum::{Router, routing::post, Json, extract::State};
-use std::sync::Arc;
-use serde::Deserialize;
-use crate::state::AppState;
 use crate::api::errors::ApiError;
 use crate::api::response::ApiResponse;
+use crate::state::AppState;
+use axum::{extract::State, routing::post, Json, Router};
+use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Deserialize)]
 pub struct InstallRequest {
@@ -26,7 +26,9 @@ async fn github_install(
     .map_err(|e| ApiError::Internal(e.to_string()))?;
 
     if existing.is_some() {
-        return Err(ApiError::Conflict("Installation already registered".to_string()));
+        return Err(ApiError::Conflict(
+            "Installation already registered".to_string(),
+        ));
     }
 
     sqlx::query(
@@ -49,6 +51,5 @@ async fn github_install(
 }
 
 pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
-        .route("/v1/webhooks/github", post(github_install))
+    Router::new().route("/v1/webhooks/github", post(github_install))
 }

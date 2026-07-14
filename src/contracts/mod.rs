@@ -1,7 +1,7 @@
-pub mod rpc;
 pub mod deploy;
+pub mod rpc;
 pub mod types;
 
-pub use rpc::SorobanRpcClient;
 pub use deploy::ContractDeployer;
+pub use rpc::SorobanRpcClient;
 pub use types::*;

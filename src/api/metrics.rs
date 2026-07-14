@@ -1,6 +1,6 @@
-use axum::{Router, routing::get, extract::State, response::IntoResponse};
-use std::sync::Arc;
 use crate::state::AppState;
+use axum::{extract::State, response::IntoResponse, routing::get, Router};
+use std::sync::Arc;
 
 async fn get_metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     state.metrics_handle.render()

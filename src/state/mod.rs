@@ -1,11 +1,11 @@
+use crate::ai::{provider, AiProvider};
 use crate::auth::{JwtService, NonceStore};
-use crate::cache::redis::{RedisPool, SessionStore, RateLimiter, WebhookDedup, ScanStatusCache};
+use crate::cache::redis::{RateLimiter, RedisPool, ScanStatusCache, SessionStore, WebhookDedup};
 use crate::database::pool::DbPool;
+use crate::database::repositories::notification_repository::NotificationRepositoryImpl;
 use crate::database::repositories::*;
 use crate::jobs::queue::JobQueue;
-use crate::services::{ScanService, GitHubService, GitHubConfig, ContractService};
-use crate::database::repositories::notification_repository::NotificationRepositoryImpl;
-use crate::ai::{AiProvider, provider};
+use crate::services::{ContractService, GitHubConfig, GitHubService, ScanService};
 
 pub struct AppState {
     pub pool: DbPool,
@@ -39,12 +39,17 @@ impl AppState {
 
         let metrics_handle = {
             let builder = metrics_exporter_prometheus::PrometheusBuilder::new();
-            builder.install_recorder()
+            builder
+                .install_recorder()
                 .expect("failed to install Prometheus recorder")
         };
 
         Self {
-            scan_service: ScanService::new(pool.clone(), queue.clone(), ProjectRepositoryImpl::new(pool.clone())),
+            scan_service: ScanService::new(
+                pool.clone(),
+                queue.clone(),
+                ProjectRepositoryImpl::new(pool.clone()),
+            ),
             queue,
             session_store: SessionStore::new(redis.clone()),
             rate_limiter: RateLimiter::new(redis.clone()),

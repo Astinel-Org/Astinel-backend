@@ -31,12 +31,10 @@ impl ProjectRepositoryImpl {
 #[async_trait]
 impl ProjectRepository for ProjectRepositoryImpl {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Project>, sqlx::Error> {
-        sqlx::query_as::<_, Project>(
-            "SELECT * FROM projects WHERE id = $1 AND deleted_at IS NULL",
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
+        sqlx::query_as::<_, Project>("SELECT * FROM projects WHERE id = $1 AND deleted_at IS NULL")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
     }
 
     async fn find_by_slug_and_org(

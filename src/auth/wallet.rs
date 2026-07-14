@@ -1,8 +1,8 @@
+use rand::Rng;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
-use rand::Rng;
 
 /// In-memory nonce store for wallet challenge requests.
 #[derive(Clone)]
@@ -72,11 +72,7 @@ pub fn stellar_pk_to_bytes(public_key: &str) -> Result<[u8; 32], String> {
 }
 
 /// Verify a signature against a Stellar public key and message.
-pub fn verify_signature(
-    public_key: &str,
-    message: &[u8],
-    signature: &[u8],
-) -> Result<(), String> {
+pub fn verify_signature(public_key: &str, message: &[u8], signature: &[u8]) -> Result<(), String> {
     let pk_bytes = stellar_pk_to_bytes(public_key)?;
     let pk = ed25519_dalek::VerifyingKey::from_bytes(&pk_bytes)
         .map_err(|e| format!("Invalid public key bytes: {}", e))?;

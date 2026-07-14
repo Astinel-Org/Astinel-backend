@@ -1,5 +1,5 @@
-use serde::Serialize;
 use axum::Json;
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct ApiResponse<T: Serialize> {
@@ -18,12 +18,21 @@ pub struct PaginatedResponse<T: Serialize> {
 
 impl<T: Serialize> ApiResponse<T> {
     pub fn ok(data: T) -> Json<Self> {
-        Json(Self { success: true, data })
+        Json(Self {
+            success: true,
+            data,
+        })
     }
 }
 
 impl<T: Serialize> PaginatedResponse<T> {
     pub fn new(data: Vec<T>, total: usize, page: usize, per_page: usize) -> Json<Self> {
-        Json(Self { success: true, data, total, page, per_page })
+        Json(Self {
+            success: true,
+            data,
+            total,
+            page,
+            per_page,
+        })
     }
 }

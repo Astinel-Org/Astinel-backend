@@ -73,7 +73,9 @@ impl SorobanRpcClient {
             return Err(format!("RPC error {}: {}", err.code, err.message));
         }
 
-        rpc_resp.result.ok_or_else(|| "RPC returned empty result".to_string())
+        rpc_resp
+            .result
+            .ok_or_else(|| "RPC returned empty result".to_string())
     }
 
     pub async fn get_health(&self) -> Result<String, String> {

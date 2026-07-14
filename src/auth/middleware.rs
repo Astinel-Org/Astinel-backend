@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use super::rbac::Role;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct AuthContext {
@@ -22,7 +22,13 @@ impl AuthContext {
     }
 
     pub fn new(user_id: Uuid, email: String, role: Role, org_id: Option<Uuid>) -> Self {
-        Self { user_id, email, role, org_id, is_authenticated: true }
+        Self {
+            user_id,
+            email,
+            role,
+            org_id,
+            is_authenticated: true,
+        }
     }
 
     pub fn has_permission(&self, permission: &super::rbac::Permission) -> bool {

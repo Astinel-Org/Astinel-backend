@@ -1,12 +1,16 @@
-use axum::{Router, routing::get, Json, extract::{State, Path, Query}};
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
 use crate::database::repositories::report_repository::ReportRepository;
+use crate::state::AppState;
+use axum::{
+    extract::{Path, Query, State},
+    routing::get,
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub struct ReportResponse {
@@ -33,7 +37,8 @@ async fn get_report(
     if !auth.is_authenticated {
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
-    let report = state.report_repository
+    let report = state
+        .report_repository
         .find_by_id(id)
         .await?
         .ok_or_else(|| ApiError::NotFound("Report not found".to_string()))?;
@@ -59,22 +64,30 @@ async fn list_reports(
     }
 
     let reports = if let Some(scan_result_id) = query.scan_result_id {
-        state.report_repository.find_by_scan_result(scan_result_id).await?
+        state
+            .report_repository
+            .find_by_scan_result(scan_result_id)
+            .await?
     } else if let Some(project_id) = query.project_id {
         state.report_repository.find_by_project(project_id).await?
     } else {
-        return Err(ApiError::BadRequest("Provide scan_result_id or project_id".to_string()));
+        return Err(ApiError::BadRequest(
+            "Provide scan_result_id or project_id".to_string(),
+        ));
     };
 
-    let resp = reports.into_iter().map(|r| ReportResponse {
-        id: r.id.to_string(),
-        scan_result_id: r.scan_result_id.to_string(),
-        format: r.format,
-        content: r.content,
-        file_path: r.file_path,
-        file_size: r.file_size,
-        created_at: r.created_at.to_rfc3339(),
-    }).collect();
+    let resp = reports
+        .into_iter()
+        .map(|r| ReportResponse {
+            id: r.id.to_string(),
+            scan_result_id: r.scan_result_id.to_string(),
+            format: r.format,
+            content: r.content,
+            file_path: r.file_path,
+            file_size: r.file_size,
+            created_at: r.created_at.to_rfc3339(),
+        })
+        .collect();
     Ok(Json(resp))
 }
 
@@ -87,8 +100,12 @@ async fn download_report(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let reports = state.report_repository.find_by_scan_result(scan_result_id).await?;
-    let report = reports.into_iter()
+    let reports = state
+        .report_repository
+        .find_by_scan_result(scan_result_id)
+        .await?;
+    let report = reports
+        .into_iter()
         .find(|r| r.format == format)
         .ok_or_else(|| ApiError::NotFound("Report not found for this format".to_string()))?;
 
@@ -107,5 +124,8 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/v1/reports", get(list_reports))
         .route("/v1/reports/{id}", get(get_report))
-        .route("/v1/reports/{format}/{scan_result_id}", get(download_report))
+        .route(
+            "/v1/reports/{format}/{scan_result_id}",
+            get(download_report),
+        )
 }

@@ -18,7 +18,10 @@ pub trait ContractDeploymentRepository: Send + Sync {
         contract_name: &str,
         network: &str,
     ) -> Result<Option<ContractDeployment>, sqlx::Error>;
-    async fn create(&self, deployment: &ContractDeployment) -> Result<ContractDeployment, sqlx::Error>;
+    async fn create(
+        &self,
+        deployment: &ContractDeployment,
+    ) -> Result<ContractDeployment, sqlx::Error>;
     async fn update_version(
         &self,
         id: Uuid,
@@ -79,7 +82,10 @@ impl ContractDeploymentRepository for ContractDeploymentRepositoryImpl {
         .await
     }
 
-    async fn create(&self, deployment: &ContractDeployment) -> Result<ContractDeployment, sqlx::Error> {
+    async fn create(
+        &self,
+        deployment: &ContractDeployment,
+    ) -> Result<ContractDeployment, sqlx::Error> {
         sqlx::query_as::<_, ContractDeployment>(
             "INSERT INTO contract_deployments (id, project_id, contract_name, network, contract_id, wasm_hash, deploy_tx_hash, version, metadata, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
         )

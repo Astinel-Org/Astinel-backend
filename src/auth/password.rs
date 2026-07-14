@@ -1,5 +1,5 @@
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use rand::rngs::OsRng;
 
 pub struct PasswordService;
@@ -13,6 +13,8 @@ impl PasswordService {
 
     pub fn verify(password: &str, hash: &str) -> Result<bool, argon2::password_hash::Error> {
         let parsed = PasswordHash::new(hash)?;
-        Ok(Argon2::default().verify_password(password.as_bytes(), &parsed).is_ok())
+        Ok(Argon2::default()
+            .verify_password(password.as_bytes(), &parsed)
+            .is_ok())
     }
 }

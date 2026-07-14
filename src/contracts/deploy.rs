@@ -63,10 +63,7 @@ impl ContractDeployer {
         None
     }
 
-    pub async fn deploy(
-        &self,
-        contract_name: &str,
-    ) -> Result<DeployResult, String> {
+    pub async fn deploy(&self, contract_name: &str) -> Result<DeployResult, String> {
         let wasm_path = Self::resolve_wasm_path(contract_name)
             .ok_or_else(|| format!("unknown contract: {contract_name}"))?;
 

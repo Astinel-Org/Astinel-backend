@@ -37,19 +37,13 @@ impl SessionStore {
     pub async fn is_refresh_token_valid(&self, jti: &str) -> RedisResult<bool> {
         let key = format!("session:refresh:{}", jti);
         let mut con = self.redis.con.clone();
-        redis::cmd("EXISTS")
-            .arg(&key)
-            .query_async(&mut con)
-            .await
+        redis::cmd("EXISTS").arg(&key).query_async(&mut con).await
     }
 
     pub async fn invalidate_refresh_token(&self, jti: &str) -> RedisResult<()> {
         let key = format!("session:refresh:{}", jti);
         let mut con = self.redis.con.clone();
-        redis::cmd("DEL")
-            .arg(&key)
-            .query_async(&mut con)
-            .await
+        redis::cmd("DEL").arg(&key).query_async(&mut con).await
     }
 }
 
@@ -152,10 +146,7 @@ impl ScanStatusCache {
     pub async fn get_progress(&self, scan_id: &str) -> RedisResult<(u8, String)> {
         let key = format!("scan:{}:progress", scan_id);
         let mut con = self.redis.con.clone();
-        let value: Option<String> = redis::cmd("GET")
-            .arg(&key)
-            .query_async(&mut con)
-            .await?;
+        let value: Option<String> = redis::cmd("GET").arg(&key).query_async(&mut con).await?;
         match value {
             Some(json_str) => {
                 let v: serde_json::Value = serde_json::from_str(&json_str)
@@ -183,9 +174,6 @@ impl ScanStatusCache {
     pub async fn is_cancelled(&self, scan_id: &str) -> RedisResult<bool> {
         let key = format!("scan:{}:cancelled", scan_id);
         let mut con = self.redis.con.clone();
-        redis::cmd("EXISTS")
-            .arg(&key)
-            .query_async(&mut con)
-            .await
+        redis::cmd("EXISTS").arg(&key).query_async(&mut con).await
     }
 }

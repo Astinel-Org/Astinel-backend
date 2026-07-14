@@ -8,10 +8,7 @@ use crate::database::pool::DbPool;
 pub trait ReportRepository: Send + Sync {
     async fn create(&self, report: &Report) -> Result<Report, sqlx::Error>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Report>, sqlx::Error>;
-    async fn find_by_scan_result(
-        &self,
-        scan_result_id: Uuid,
-    ) -> Result<Vec<Report>, sqlx::Error>;
+    async fn find_by_scan_result(&self, scan_result_id: Uuid) -> Result<Vec<Report>, sqlx::Error>;
     async fn find_by_project(&self, project_id: Uuid) -> Result<Vec<Report>, sqlx::Error>;
 }
 
@@ -49,10 +46,7 @@ impl ReportRepository for ReportRepositoryImpl {
             .await
     }
 
-    async fn find_by_scan_result(
-        &self,
-        scan_result_id: Uuid,
-    ) -> Result<Vec<Report>, sqlx::Error> {
+    async fn find_by_scan_result(&self, scan_result_id: Uuid) -> Result<Vec<Report>, sqlx::Error> {
         sqlx::query_as::<_, Report>(
             "SELECT * FROM reports WHERE scan_result_id = $1 ORDER BY created_at DESC",
         )

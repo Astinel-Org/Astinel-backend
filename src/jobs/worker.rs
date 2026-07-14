@@ -1,7 +1,7 @@
-use std::sync::Arc;
-use tracing::{info, error, instrument};
 use crate::jobs::queue::JobQueue;
 use crate::jobs::scan_job::ScanJobExecutor;
+use std::sync::Arc;
+use tracing::{error, info, instrument};
 
 pub struct WorkerPool {
     queue: JobQueue,
@@ -11,7 +11,11 @@ pub struct WorkerPool {
 
 impl WorkerPool {
     pub fn new(queue: JobQueue, executor: Arc<ScanJobExecutor>, worker_count: usize) -> Self {
-        Self { queue, executor, worker_count }
+        Self {
+            queue,
+            executor,
+            worker_count,
+        }
     }
 
     pub async fn start(&self) {
@@ -34,7 +38,11 @@ struct Worker {
 
 impl Worker {
     fn new(id: usize, queue: JobQueue, executor: Arc<ScanJobExecutor>) -> Self {
-        Self { id, queue, executor }
+        Self {
+            id,
+            queue,
+            executor,
+        }
     }
 
     #[instrument(skip(self), fields(worker_id = self.id))]

@@ -1,12 +1,16 @@
-use axum::{Router, routing::{get, post}, Json, extract::{State, Path, Query}};
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
 use crate::database::repositories::notification_repository::NotificationRepository;
+use crate::state::AppState;
+use axum::{
+    extract::{Path, Query, State},
+    routing::{get, post},
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub struct NotificationResponse {
@@ -42,20 +46,26 @@ async fn list_notifications(
     }
     let org_id = auth.org_id.unwrap_or_default();
     let limit = query.limit.unwrap_or(50).min(200);
-    let events = state.notification_repository.list_by_organization(org_id, limit).await?;
+    let events = state
+        .notification_repository
+        .list_by_organization(org_id, limit)
+        .await?;
 
-    let resp = events.into_iter().map(|e| NotificationResponse {
-        id: e.id.to_string(),
-        organization_id: e.organization_id.to_string(),
-        event_type: e.event_type,
-        title: e.title,
-        message: e.message,
-        severity: e.severity,
-        resource_type: e.resource_type,
-        resource_id: e.resource_id.map(|id| id.to_string()),
-        is_read: e.is_read,
-        created_at: e.created_at.to_rfc3339(),
-    }).collect();
+    let resp = events
+        .into_iter()
+        .map(|e| NotificationResponse {
+            id: e.id.to_string(),
+            organization_id: e.organization_id.to_string(),
+            event_type: e.event_type,
+            title: e.title,
+            message: e.message,
+            severity: e.severity,
+            resource_type: e.resource_type,
+            resource_id: e.resource_id.map(|id| id.to_string()),
+            is_read: e.is_read,
+            created_at: e.created_at.to_rfc3339(),
+        })
+        .collect();
     Ok(Json(resp))
 }
 

@@ -1,8 +1,8 @@
+use crate::auth::AuthContext;
 use axum::{
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
 };
-use crate::auth::AuthContext;
 
 impl<S: Send + Sync> FromRequestParts<S> for AuthContext {
     type Rejection = (StatusCode, &'static str);

@@ -43,10 +43,9 @@ impl ContractService {
         contract_name: &str,
         network: &str,
     ) -> Result<ContractDeployment, String> {
-        let deployer = self
-            .deployer
-            .as_ref()
-            .ok_or_else(|| "Soroban deployer not configured (set SOROBAN_RPC_URL etc.)".to_string())?;
+        let deployer = self.deployer.as_ref().ok_or_else(|| {
+            "Soroban deployer not configured (set SOROBAN_RPC_URL etc.)".to_string()
+        })?;
 
         let result = deployer.deploy(contract_name).await?;
 

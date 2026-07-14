@@ -1,16 +1,16 @@
-pub mod routes;
-pub mod middleware;
 pub mod errors;
-pub mod response;
 pub mod extractors;
 pub mod metrics;
+pub mod middleware;
+pub mod response;
+pub mod routes;
 
+use crate::ai::routes as ai_routes;
+use crate::state::AppState;
 use axum::Router;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use crate::state::AppState;
-use crate::ai::routes as ai_routes;
 
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
@@ -31,6 +31,9 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .merge(metrics::routes())
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
-        .layer(axum::middleware::from_fn_with_state(state.clone(), self::middleware::auth_middleware))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            self::middleware::auth_middleware,
+        ))
         .with_state(state)
 }

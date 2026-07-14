@@ -1,6 +1,6 @@
-use uuid::Uuid;
 use crate::cache::redis::RedisPool;
 use crate::jobs::status::JobStatus;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QueuedJob {
@@ -45,8 +45,7 @@ impl JobQueue {
             .query_async(&mut con)
             .await
             .ok()?;
-        result
-            .and_then(|(_key, payload)| serde_json::from_str(&payload).ok())
+        result.and_then(|(_key, payload)| serde_json::from_str(&payload).ok())
     }
 
     pub async fn len(&self) -> usize {

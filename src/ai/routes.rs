@@ -1,10 +1,14 @@
-use axum::{Router, routing::{get, post}, Json, extract::State};
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use crate::state::AppState;
-use crate::auth::AuthContext;
-use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::api::response::ApiResponse;
+use crate::auth::AuthContext;
+use crate::state::AppState;
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize)]
 pub struct FixSuggestionRequest {
@@ -47,7 +51,8 @@ async fn fix_suggestion(
     }
 
     let context = format!("[{}] {} at {}", req.rule_id, req.message, req.file_path);
-    let suggestion = state.ai_provider
+    let suggestion = state
+        .ai_provider
         .generate_fix_suggestion(&context, &req.code_snippet)
         .await
         .map_err(|e| ApiError::Internal(format!("AI service error: {}", e)))?;
@@ -64,8 +69,11 @@ async fn analyze(
         return Err(ApiError::Auth(crate::auth::AuthError::PermissionDenied));
     }
 
-    let summary = req.scan_summary.unwrap_or_else(|| "No scan summary provided".to_string());
-    let analysis = state.ai_provider
+    let summary = req
+        .scan_summary
+        .unwrap_or_else(|| "No scan summary provided".to_string());
+    let analysis = state
+        .ai_provider
         .analyze_security(&req.query, &summary)
         .await
         .map_err(|e| ApiError::Internal(format!("AI service error: {}", e)))?;
@@ -73,16 +81,18 @@ async fn analyze(
     Ok(ApiResponse::ok(AnalyzeResponse { analysis }))
 }
 
-async fn health(
-    State(state): State<Arc<AppState>>,
-) -> Json<AiHealthResponse> {
+async fn health(State(state): State<Arc<AppState>>) -> Json<AiHealthResponse> {
     let available = state.ai_provider.health().await.unwrap_or(false);
     let provider = if std::env::var("OLLAMA_URL").is_ok() {
         "ollama"
     } else {
         "disabled"
-    }.to_string();
-    Json(AiHealthResponse { available, provider })
+    }
+    .to_string();
+    Json(AiHealthResponse {
+        available,
+        provider,
+    })
 }
 
 pub fn routes() -> Router<Arc<AppState>> {
