@@ -72,7 +72,7 @@ async fn deploy_contract(
         .contract_service
         .deploy_contract(project_id, &req.contract_name, network)
         .await
-        .map_err(|e| ApiError::BadRequest(e))?;
+        .map_err(ApiError::BadRequest)?;
     Ok(ApiResponse::ok(deployment))
 }
 
@@ -83,7 +83,7 @@ async fn contract_health(
         .contract_service
         .health()
         .await
-        .map_err(|e| ApiError::BadRequest(e))?;
+        .map_err(ApiError::BadRequest)?;
     Ok(ApiResponse::ok(serde_json::json!({
         "configured": health.is_some(),
         "network_health": health,
