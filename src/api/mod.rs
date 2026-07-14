@@ -27,6 +27,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .merge(routes::notifications::routes())
         .merge(routes::openapi::routes())
         .merge(ai_routes::routes())
+        .merge(routes::contracts::routes())
         .merge(metrics::routes())
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())

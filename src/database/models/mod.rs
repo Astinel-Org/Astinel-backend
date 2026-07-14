@@ -12,6 +12,7 @@ pub mod api_key;
 pub mod webhook;
 pub mod github_installation;
 pub mod notification_event;
+pub mod contract_deployment;
 
 pub use user::User;
 pub use organization::Organization;
@@ -27,3 +28,4 @@ pub use api_key::ApiKey;
 pub use webhook::Webhook;
 pub use github_installation::GithubInstallation;
 pub use notification_event::NotificationEvent;
+pub use contract_deployment::ContractDeployment;

@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod contracts;
 pub mod core;
 pub mod utils;
 

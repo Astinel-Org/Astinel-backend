@@ -15,3 +15,5 @@ pub use report_repository::{ReportRepository, ReportRepositoryImpl};
 pub use api_key_repository::{ApiKeyRepository, ApiKeyRepositoryImpl};
 pub mod notification_repository;
 pub use notification_repository::{NotificationRepository, NotificationRepositoryImpl};
+pub mod contract_deployment_repository;
+pub use contract_deployment_repository::{ContractDeploymentRepository, ContractDeploymentRepositoryImpl};

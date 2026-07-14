@@ -3,7 +3,7 @@ use crate::cache::redis::{RedisPool, SessionStore, RateLimiter, WebhookDedup, Sc
 use crate::database::pool::DbPool;
 use crate::database::repositories::*;
 use crate::jobs::queue::JobQueue;
-use crate::services::{ScanService, GitHubService, GitHubConfig};
+use crate::services::{ScanService, GitHubService, GitHubConfig, ContractService};
 use crate::database::repositories::notification_repository::NotificationRepositoryImpl;
 use crate::ai::{AiProvider, provider};
 
@@ -29,6 +29,7 @@ pub struct AppState {
     pub metrics_handle: metrics_exporter_prometheus::PrometheusHandle,
     pub notification_repository: NotificationRepositoryImpl,
     pub ai_provider: Box<dyn AiProvider>,
+    pub contract_service: ContractService,
 }
 
 impl AppState {
@@ -63,6 +64,7 @@ impl AppState {
             ai_provider: provider::create_provider(),
             notification_repository: NotificationRepositoryImpl::new(pool.clone()),
             github_service: GitHubConfig::from_env().map(GitHubService::new),
+            contract_service: ContractService::new(pool.clone()),
             pool,
         }
     }
