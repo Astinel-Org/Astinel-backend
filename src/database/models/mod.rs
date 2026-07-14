@@ -10,6 +10,7 @@ pub mod report;
 pub mod audit_log;
 pub mod api_key;
 pub mod webhook;
+pub mod github_installation;
 
 pub use user::User;
 pub use organization::Organization;
@@ -23,3 +24,4 @@ pub use report::Report;
 pub use audit_log::AuditLog;
 pub use api_key::ApiKey;
 pub use webhook::Webhook;
+pub use github_installation::GithubInstallation;

@@ -6,3 +6,4 @@ pub mod scans;
 pub mod reports;
 pub mod findings;
 pub mod wallet;
+pub mod webhooks;

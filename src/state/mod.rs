@@ -3,7 +3,7 @@ use crate::cache::redis::{RedisPool, SessionStore, RateLimiter, WebhookDedup, Sc
 use crate::database::pool::DbPool;
 use crate::database::repositories::*;
 use crate::jobs::queue::JobQueue;
-use crate::services::ScanService;
+use crate::services::{ScanService, GitHubService, GitHubConfig};
 
 pub struct AppState {
     pub pool: DbPool,
@@ -23,6 +23,7 @@ pub struct AppState {
     pub finding_repository: FindingRepositoryImpl,
     pub report_repository: ReportRepositoryImpl,
     pub api_key_repository: ApiKeyRepositoryImpl,
+    pub github_service: Option<GitHubService>,
 }
 
 impl AppState {
@@ -47,6 +48,7 @@ impl AppState {
             finding_repository: FindingRepositoryImpl::new(pool.clone()),
             report_repository: ReportRepositoryImpl::new(pool.clone()),
             api_key_repository: ApiKeyRepositoryImpl::new(pool.clone()),
+            github_service: GitHubConfig::from_env().map(GitHubService::new),
             pool,
         }
     }

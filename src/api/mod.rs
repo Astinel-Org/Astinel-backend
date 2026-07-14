@@ -20,6 +20,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .merge(routes::reports::routes())
         .merge(routes::findings::routes())
         .merge(routes::wallet::routes())
+        .merge(routes::webhooks::routes())
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .layer(axum::middleware::from_fn_with_state(state.clone(), self::middleware::auth_middleware))

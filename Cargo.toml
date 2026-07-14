@@ -36,6 +36,10 @@ ed25519-dalek = { version = "2.1", features = ["rand_core"] }
 stellar-strkey = "0.0.18"
 base64 = "0.22"
 
+# GitHub integration
+octocrab = "0.41"
+hmac = "0.12"
+
 # API
 axum = { version = "0.8", features = ["macros"] }
 tower = "0.5"
