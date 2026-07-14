@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -8,17 +9,21 @@ pub enum Role {
     Viewer,
 }
 
-impl Role {
-    pub fn from_str(s: &str) -> Option<Self> {
+impl FromStr for Role {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "owner" => Some(Self::Owner),
-            "admin" => Some(Self::Admin),
-            "developer" => Some(Self::Developer),
-            "viewer" => Some(Self::Viewer),
-            _ => None,
+            "owner" => Ok(Self::Owner),
+            "admin" => Ok(Self::Admin),
+            "developer" => Ok(Self::Developer),
+            "viewer" => Ok(Self::Viewer),
+            _ => Err(()),
         }
     }
+}
 
+impl Role {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Owner => "owner",

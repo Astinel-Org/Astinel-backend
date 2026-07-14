@@ -4,7 +4,7 @@ use axum::{
     response::Response,
 };
 use std::sync::Arc;
-use crate::auth::{AuthContext, JwtService, rbac::Role};
+use crate::auth::{AuthContext, rbac::Role};
 use crate::database::repositories::ApiKeyRepository;
 use crate::state::AppState;
 
@@ -19,7 +19,7 @@ async fn authenticate_api_key(state: &AppState, key: &str) -> Option<AuthContext
     let hash = sha256_hex(key);
     let api_key = state.api_key_repository.find_by_hash(&hash).await.ok()??;
 
-    let role = Role::from_str("developer").unwrap_or(Role::Developer);
+    let role = "developer".parse::<Role>().unwrap_or(Role::Developer);
     let context = AuthContext::new(
         uuid::Uuid::nil(),
         format!("api:{}", api_key.name),
@@ -58,7 +58,7 @@ pub async fn auth_middleware(
         Some(token) => {
             match state.jwt_service.validate_access_token(token) {
                 Ok(claims) => {
-                    let role = Role::from_str(&claims.role)
+                    let role = claims.role.parse::<Role>()
                         .unwrap_or(Role::Viewer);
                     AuthContext::new(claims.sub, claims.email, role, claims.org_id)
                 }

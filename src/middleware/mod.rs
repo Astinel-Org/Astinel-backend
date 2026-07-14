@@ -1,3 +1,1 @@
-pub mod auth;
-
-pub use auth::auth_middleware;
+// Auth middleware is in crate::api::middleware

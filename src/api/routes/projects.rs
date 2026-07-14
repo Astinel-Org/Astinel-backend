@@ -1,12 +1,12 @@
-use axum::{Router, routing::{get, post}, Json, extract::State};
+use axum::{Router, routing::post, Json, extract::State};
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use crate::state::AppState;
 use crate::auth::AuthContext;
 use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
 use crate::database::models::Project;
+use crate::database::repositories::project_repository::ProjectRepository;
 
 #[derive(Deserialize)]
 pub struct CreateProjectRequest {
@@ -35,7 +35,6 @@ async fn create_project(
     let org_id = auth.org_id.ok_or_else(|| ApiError::BadRequest("No organization context".to_string()))?;
 
     let project = Project::new(
-        Uuid::new_v4(),
         org_id,
         req.name.clone(),
         req.name.to_lowercase().replace(' ', "-"),

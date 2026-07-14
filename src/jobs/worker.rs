@@ -1,7 +1,6 @@
 use std::sync::Arc;
-use tokio::sync::mpsc;
 use tracing::{info, error, instrument};
-use crate::jobs::queue::{JobQueue, QueuedJob};
+use crate::jobs::queue::JobQueue;
 use crate::jobs::scan_job::ScanJobExecutor;
 
 pub struct WorkerPool {

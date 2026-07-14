@@ -1,3 +1,1 @@
-pub mod api;
-
-pub use api::ApiError;
+// API error handling is in crate::api::errors

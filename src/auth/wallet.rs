@@ -16,6 +16,12 @@ struct NonceEntry {
     expires_at: Instant,
 }
 
+impl Default for NonceStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NonceStore {
     pub fn new() -> Self {
         Self {
@@ -91,17 +97,17 @@ pub fn build_challenge_message(nonce: &str) -> String {
 mod tests {
     use super::*;
     use ed25519_dalek::Signer;
+    use stellar_strkey::ed25519::PublicKey as StellarPublicKey;
 
     fn encode_pk(pk: &ed25519_dalek::VerifyingKey) -> String {
-        let encoded = stellar_strkey::Strkey::PublicKeyEd25519(
-            ed25519_dalek::VerifyingKey::to_bytes(pk).into()
-        ).to_string();
-        encoded.as_str().to_string()
+        let pk_bytes = ed25519_dalek::VerifyingKey::to_bytes(pk);
+        StellarPublicKey(pk_bytes).to_string().as_str().to_string()
     }
 
     #[test]
     fn test_pk_roundtrip() {
-        let sk = ed25519_dalek::SigningKey::generate(&mut rand::thread_rng());
+        let mut rng = rand::thread_rng();
+        let sk = ed25519_dalek::SigningKey::generate(&mut rng);
         let pk = sk.verifying_key();
 
         let encoded = encode_pk(&pk);
@@ -113,7 +119,8 @@ mod tests {
 
     #[test]
     fn test_sign_and_verify() {
-        let sk = ed25519_dalek::SigningKey::generate(&mut rand::thread_rng());
+        let mut rng = rand::thread_rng();
+        let sk = ed25519_dalek::SigningKey::generate(&mut rng);
         let pk = sk.verifying_key();
 
         let encoded = encode_pk(&pk);
@@ -126,12 +133,13 @@ mod tests {
 
     #[test]
     fn test_verify_wrong_key() {
-        let sk = ed25519_dalek::SigningKey::generate(&mut rand::thread_rng());
+        let mut rng = rand::thread_rng();
+        let sk = ed25519_dalek::SigningKey::generate(&mut rng);
         let pk = sk.verifying_key();
         let encoded = encode_pk(&pk);
         let message = b"test message";
 
-        let other_sk = ed25519_dalek::SigningKey::generate(&mut rand::thread_rng());
+        let other_sk = ed25519_dalek::SigningKey::generate(&mut rng);
         let signature = other_sk.sign(message);
 
         let result = verify_signature(&encoded, message, &signature.to_bytes());

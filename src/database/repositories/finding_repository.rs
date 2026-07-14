@@ -99,6 +99,7 @@ impl FindingRepository for FindingRepositoryImpl {
         .await
     }
 
+    #[allow(unused_assignments)]
     async fn list_with_filters(
         &self,
         scan_result_id: Uuid,

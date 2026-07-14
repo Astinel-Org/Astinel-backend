@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::state::AppState;
 use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
-use crate::auth::{AuthTokens, JwtService, PasswordService, AuthError};
+use crate::auth::{AuthTokens, PasswordService, AuthError};
 use crate::database::models::user::UserRole;
 use crate::database::models::{Organization, OrganizationMember};
 use crate::database::repositories::{UserRepository, OrganizationRepository};

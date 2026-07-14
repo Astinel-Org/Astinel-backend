@@ -6,6 +6,7 @@ use crate::state::AppState;
 use crate::auth::AuthContext;
 use crate::api::response::ApiResponse;
 use crate::api::errors::ApiError;
+use crate::database::repositories::report_repository::ReportRepository;
 
 #[derive(Serialize)]
 pub struct ReportResponse {

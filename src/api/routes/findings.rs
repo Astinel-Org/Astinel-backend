@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::state::AppState;
 use crate::auth::AuthContext;
 use crate::api::errors::ApiError;
+use crate::database::repositories::finding_repository::FindingRepository;
 
 #[derive(Deserialize)]
 pub struct FindingsQuery {

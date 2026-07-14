@@ -4,7 +4,6 @@ use axum::{
 };
 use crate::auth::AuthContext;
 
-#[axum::async_trait]
 impl<S: Send + Sync> FromRequestParts<S> for AuthContext {
     type Rejection = (StatusCode, &'static str);
 

@@ -19,6 +19,7 @@ pub struct Finding {
 }
 
 impl Finding {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         scan_result_id: Uuid,
         rule_id: String,

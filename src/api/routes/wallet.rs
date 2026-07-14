@@ -49,7 +49,7 @@ async fn wallet_login(
     Json(req): Json<WalletLoginRequest>,
 ) -> Result<Json<ApiResponse<WalletLoginResponse>>, ApiError> {
     let nonce = state.nonce_store.consume(&req.public_key).await
-        .ok_or_else(|| ApiError::Auth(AuthError::InvalidCredentials))?;
+        .ok_or(ApiError::Auth(AuthError::InvalidCredentials))?;
 
     let message = crate::auth::wallet::build_challenge_message(&nonce);
 
